@@ -1,0 +1,151 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #7c3aed;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #7c3aed;
+  --color-on-primary-container: #ffffff;
+
+  --color-background: #f3f4f6;
+  --color-on-background: #111827;
+
+  --color-surface: #ffffff;
+  --color-surface-industrial: #f9fafb;
+  --color-surface-steel: #f3f4f6;
+  --color-surface-accent: #e5e7eb;
+
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f9fafb;
+  --color-surface-container: #f3f4f6;
+  --color-surface-container-high: #e5e7eb;
+  --color-surface-container-highest: #d1d5db;
+
+  --color-on-surface: #111827;
+  --color-on-surface-variant: #4b5563;
+  --color-text-high-contrast: #111827;
+  --color-text-muted: #6b7280;
+
+  --color-border-technical: #d1d5db;
+  --color-outline-variant: #d1d5db;
+
+  --color-risk-nominal: #10b981;
+  --color-risk-low: #10b981;
+  --color-risk-critical: #ef4444;
+  --color-risk-high: #ef4444;
+  --color-risk-medium: #f59e0b;
+
+  --font-mono: var(--font-jetbrains-mono), monospace;
+  --font-sans: var(--font-inter), sans-serif;
+  --font-jetbrains: var(--font-jetbrains-mono), monospace;
+  --font-inter: var(--font-inter), sans-serif;
+
+  --spacing-gutter: 24px;
+  --spacing-panel-gap: 1px;
+  --spacing-margin-desktop: 40px;
+  --spacing-margin-mobile: 16px;
+
+  --radius-DEFAULT: 0.25rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.5rem;
+  --radius-full: 9999px;
+}
+
+:root {
+  --background: #f3f4f6;
+  --foreground: #111827;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), sans-serif;
+  overscroll-behavior: none;
+}
+
+/* Hide scrollbars for clean technical dashboard presentation */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Design System Typography Utilities matching Stitch Specification */
+.font-display-lg {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+}
+
+.font-headline-lg {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.font-headline-md {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.font-headline-sm {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.font-label-caps {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.font-label-md {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.05em;
+}
+
+.font-label-sm {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.font-data-mono {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.font-body-lg {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.font-body-md {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.font-body-sm {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}

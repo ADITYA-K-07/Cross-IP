@@ -1,0 +1,55 @@
+import { PricingTier } from "./types";
+
+export const PRICING_TIERS: PricingTier[] = [
+  {
+    id: "scout",
+    name: "Scout",
+    price: "$0",
+    period: "/mo",
+    description: "Baseline perimeter monitoring for localized environments.",
+    recommended: false,
+    buttonText: "DEPLOY SCOUT",
+    buttonIcon: "arrow_forward",
+    buttonVariant: "outline",
+    features: [
+      { text: "1,000 Scans / mo", included: true },
+      { text: "7-Day Data Retention", included: true },
+      { text: "Community Support", included: true },
+      { text: "Advanced API Access", included: false },
+    ],
+  },
+  {
+    id: "vanguard",
+    name: "Vanguard",
+    price: "$249",
+    period: "/mo",
+    description: "Comprehensive threat intelligence for active networks.",
+    recommended: true,
+    buttonText: "INITIATE VANGUARD",
+    buttonIcon: "power_settings_new",
+    buttonVariant: "primary",
+    features: [
+      { text: "100,000 Scans / mo", included: true },
+      { text: "90-Day Data Retention", included: true },
+      { text: "Priority Support (24/7)", included: true },
+      { text: "Full API Integration", included: true },
+    ],
+  },
+  {
+    id: "titan",
+    name: "Titan",
+    price: "Custom",
+    period: "",
+    description: "Enterprise-grade architecture for global operations.",
+    recommended: false,
+    buttonText: "CONTACT COMMAND",
+    buttonIcon: "mail",
+    buttonVariant: "outline",
+    features: [
+      { text: "Unlimited Scans", included: true },
+      { text: "Infinite Retention", included: true },
+      { text: "Dedicated Analyst", included: true },
+      { text: "Custom Deployments", included: true },
+    ],
+  },
+];
