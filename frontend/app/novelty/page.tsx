@@ -1,93 +1,129 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { InventionInput } from "@/components/novelty/InventionInput";
-import { ScanDiagnostics } from "@/components/novelty/ScanDiagnostics";
-import { MOCK_NOVELTY_RESULT } from "@/components/novelty/mockData";
-import { NoveltyResult } from "@/components/novelty/types";
+import { PatentCard } from "@/components/ip/Cards";
+import { ResultSkeleton } from "@/components/ip/LoadingStates";
+import { RiskGauge } from "@/components/ip/RiskGauge";
+import { UpgradeNudge } from "@/components/ip/UpgradeNudge";
+import { RateLimitError, checkNovelty } from "@/components/ip/api";
+import { demoInputs } from "@/components/ip/data";
+import { useFreeChecks } from "@/components/ip/useFreeChecks";
+import { useToast } from "@/components/ip/ToastProvider";
+import { NoveltyResult } from "@/components/ip/types";
 
 export default function NoveltyPage() {
-  const [inputText, setInputText] = useState("");
-  const [isScanning, setIsScanning] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [description, setDescription] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("q") ?? "";
+  });
   const [result, setResult] = useState<NoveltyResult | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const { remainingChecks, consumeCheck } = useFreeChecks();
+  const { showToast } = useToast();
 
-  const canExecute = inputText.trim().length > 0 && !isScanning;
+  const runCheck = async () => {
+    if (description.trim().length < 20) {
+      setMessage("Please describe your invention in at least 20 characters.");
+      showToast("warning", "Add a little more detail before checking.");
+      return;
+    }
+    if (remainingChecks <= 0) {
+      setMessage("Free tier limit reached. Open Pricing to see paid plans, or reset checks from the dashboard for demo use.");
+      showToast("warning", "Free tier limit reached.");
+      return;
+    }
 
-  const handleExecuteScan = () => {
-    if (!canExecute) return;
-
-    setIsScanning(true);
+    setMessage("");
+    setLoading(true);
     setResult(null);
-
-    // Simulate analysis delay
-    setTimeout(() => {
-      setIsScanning(false);
-      setHasSearched(true);
-      setResult(MOCK_NOVELTY_RESULT);
-    }, 1200);
+    try {
+      const nextResult = await checkNovelty(description.trim());
+      setResult(nextResult);
+      consumeCheck();
+      showToast("success", `Novelty check complete. ${Math.max(0, remainingChecks - 1)} checks left.`);
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        setMessage("Free tier limit reached. Open Pricing to see paid plans.");
+        showToast("warning", "Free tier limit reached.");
+      } else {
+        setMessage("Something went wrong. Please try again.");
+        showToast("error", "Could not complete the novelty check.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="flex flex-col w-full h-full p-gutter gap-gutter max-w-[1440px] mx-auto pb-20">
-      {/* Header Section */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-4 border-b border-border-technical">
-        <div>
-          <h1 className="font-headline-lg text-on-surface">
-            Patent Novelty Analysis
-          </h1>
-          <p className="font-body-md text-text-muted mt-2">
-            Real-time semantic scanning against global intellectual property databases.
+    <div className="page-wrap">
+      <Link href="/dashboard" className="inline-flex items-center gap-1 text-sm font-semibold text-primary">
+        <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+        Back to dashboard
+      </Link>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <section className="rounded-lg border border-border-technical bg-white p-6">
+          <p className="text-sm font-bold text-primary">Patent Novelty Checker</p>
+          <h1 className="mt-2 text-3xl font-bold text-on-surface">Check if your invention is new</h1>
+          <p className="mt-3 text-on-surface-variant">
+            Describe the problem, your solution, and what makes it different.
           </p>
-        </div>
 
-        <div className="flex gap-4 items-center">
+          <textarea
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            rows={10}
+            maxLength={5000}
+            className="mt-6 w-full resize-none rounded-lg border border-border-technical p-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+            placeholder="Describe your invention..."
+          />
+          <div className="mt-2 flex items-center justify-between text-xs text-text-muted">
+            <button type="button" onClick={() => setDescription(demoInputs.novelty)} className="font-semibold text-primary">
+              Use sample
+            </button>
+            <span>{description.length} / 5000</span>
+          </div>
+          {message && <p className="mt-3 text-sm font-semibold text-risk-high">{message}</p>}
           <button
             type="button"
-            className="bg-transparent border border-border-technical text-text-muted px-4 py-2 flex items-center gap-2 hover:border-primary hover:text-primary transition-colors rounded"
+            onClick={runCheck}
+            disabled={loading}
+            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
           >
-            <span className="material-symbols-outlined text-[20px]">tune</span>
-            <span className="font-label-caps">Filters</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleExecuteScan}
-            disabled={!canExecute}
-            className={`bg-primary text-on-primary px-6 py-2 flex items-center gap-2 transition-all relative overflow-hidden group rounded ${
-              !canExecute ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/90"
-            }`}
-          >
-            <span
-              className={`material-symbols-outlined text-[20px] ${
-                isScanning ? "animate-spin" : ""
-              }`}
-            >
-              {isScanning ? "sync" : "radar"}
+            <span className={`material-symbols-outlined text-[20px] ${loading ? "animate-spin" : ""}`}>
+              {loading ? "sync" : "search"}
             </span>
-            <span className="font-label-caps">
-              {isScanning
-                ? "Scanning..."
-                : hasSearched
-                ? "Re-Scan"
-                : "Execute Scan"}
-            </span>
+            {loading ? "Searching patents..." : "Check novelty"}
           </button>
-        </div>
-      </header>
+          <UpgradeNudge />
+        </section>
 
-      {/* Main 2-Column Content Grid */}
-      <div className="grid grid-cols-12 gap-panel-gap bg-border-technical border border-border-technical min-h-[600px]">
-        <InventionInput
-          value={inputText}
-          onChange={setInputText}
-          isScanning={isScanning}
-        />
-        <ScanDiagnostics
-          result={result}
-          isScanning={isScanning}
-          hasSearched={hasSearched}
-        />
+        <section className="rounded-lg border border-border-technical bg-surface-container-low p-4">
+          {loading && <ResultSkeleton />}
+
+          {!loading && !result && (
+            <div className="rounded-lg bg-white p-8 text-center text-on-surface-variant">
+              Your patent risk score and closest matches will appear here.
+            </div>
+          )}
+
+          {result && (
+            <div className="animate-[fade-in_200ms_ease-out] space-y-4">
+              <div className="grid gap-4 md:grid-cols-[220px_1fr]">
+                <RiskGauge score={result.risk_score} label={`${result.risk_label} risk`} />
+                <div className="rounded-lg border border-border-technical bg-white p-5">
+                  <h2 className="text-xl font-bold text-on-surface">Plain-English result</h2>
+                  <p className="mt-3 text-on-surface-variant">{result.analysis}</p>
+                </div>
+              </div>
+              {result.patents.map((patent) => (
+                <PatentCard key={patent.patent_number} patent={patent} />
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );

@@ -2,39 +2,40 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CopyrightCard } from "@/components/ip/Cards";
+import { TrademarkCard } from "@/components/ip/Cards";
 import { ResultSkeleton } from "@/components/ip/LoadingStates";
 import { RiskGauge } from "@/components/ip/RiskGauge";
 import { UpgradeNudge } from "@/components/ip/UpgradeNudge";
-import { RateLimitError, checkCopyright } from "@/components/ip/api";
+import { RateLimitError, scanTrademark } from "@/components/ip/api";
 import { demoInputs } from "@/components/ip/data";
 import { useFreeChecks } from "@/components/ip/useFreeChecks";
 import { useToast } from "@/components/ip/ToastProvider";
-import { CopyrightResult } from "@/components/ip/types";
+import { TrademarkResult } from "@/components/ip/types";
 
 function riskToScore(level: string) {
   const normalized = level.toLowerCase();
   if (normalized.includes("critical")) return 90;
   if (normalized.includes("high")) return 75;
   if (normalized.includes("medium")) return 52;
-  return 20;
+  return 22;
 }
 
-export default function CopyrightPage() {
-  const [content, setContent] = useState(() => {
+export default function TrademarkPage() {
+  const [brand, setBrand] = useState(() => {
     if (typeof window === "undefined") return "";
     return new URLSearchParams(window.location.search).get("q") ?? "";
   });
-  const [result, setResult] = useState<CopyrightResult | null>(null);
+  const [phonetic, setPhonetic] = useState(true);
+  const [result, setResult] = useState<TrademarkResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const { remainingChecks, consumeCheck } = useFreeChecks();
   const { showToast } = useToast();
 
-  const runCheck = async () => {
-    if (content.trim().length < 20) {
-      setMessage("Please paste at least 20 characters.");
-      showToast("warning", "Paste a little more text before checking.");
+  const runScan = async () => {
+    if (brand.trim().length < 2) {
+      setMessage("Please enter a brand name.");
+      showToast("warning", "Enter a brand name before scanning.");
       return;
     }
     if (remainingChecks <= 0) {
@@ -47,17 +48,17 @@ export default function CopyrightPage() {
     setLoading(true);
     setResult(null);
     try {
-      const nextResult = await checkCopyright(content.trim());
+      const nextResult = await scanTrademark(brand.trim(), phonetic);
       setResult(nextResult);
       consumeCheck();
-      showToast("success", `Copy check complete. ${Math.max(0, remainingChecks - 1)} checks left.`);
+      showToast("success", `Trademark scan complete. ${Math.max(0, remainingChecks - 1)} checks left.`);
     } catch (error) {
       if (error instanceof RateLimitError) {
         setMessage("Free tier limit reached. Open Pricing to see paid plans.");
         showToast("warning", "Free tier limit reached.");
       } else {
         setMessage("Something went wrong. Please try again.");
-        showToast("error", "Could not check for copies.");
+        showToast("error", "Could not scan trademarks.");
       }
     } finally {
       setLoading(false);
@@ -73,60 +74,70 @@ export default function CopyrightPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <section className="rounded-lg border border-border-technical bg-white p-6">
-          <p className="text-sm font-bold text-primary">Copyright Monitor</p>
-          <h1 className="mt-2 text-3xl font-bold text-on-surface">Check text or code for copies</h1>
+          <p className="text-sm font-bold text-primary">Trademark Scanner</p>
+          <h1 className="mt-2 text-3xl font-bold text-on-surface">Check your brand name</h1>
           <p className="mt-3 text-on-surface-variant">
-            Paste public-facing text, documentation, or code snippets and look for similar sources.
+            Search for exact, similar, and similar-sounding names before you launch.
           </p>
-          <textarea
-            value={content}
-            onChange={(event) => setContent(event.target.value)}
-            rows={12}
-            maxLength={5000}
-            className="mt-6 w-full resize-none rounded-lg border border-border-technical p-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-            placeholder="Paste text or code here..."
+
+          <label className="mt-6 block text-sm font-semibold text-on-surface" htmlFor="brand">
+            Brand name
+          </label>
+          <input
+            id="brand"
+            value={brand}
+            onChange={(event) => setBrand(event.target.value)}
+            className="mt-2 w-full rounded-lg border border-border-technical p-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+            placeholder="Example: FlowNest"
           />
-          <div className="mt-2 flex items-center justify-between text-xs text-text-muted">
-            <button type="button" onClick={() => setContent(demoInputs.copyright)} className="font-semibold text-primary">
-              Use sample
-            </button>
-            <span>{content.length} / 5000</span>
-          </div>
+
+          <label className="mt-4 flex items-center gap-3 text-sm font-semibold text-on-surface">
+            <input
+              type="checkbox"
+              checked={phonetic}
+              onChange={(event) => setPhonetic(event.target.checked)}
+              className="h-4 w-4 accent-primary"
+            />
+            Also check similar-sounding names
+          </label>
+
+          <button type="button" onClick={() => setBrand(demoInputs.trademark)} className="mt-4 text-sm font-semibold text-primary">
+            Use sample
+          </button>
           {message && <p className="mt-3 text-sm font-semibold text-risk-high">{message}</p>}
+
           <button
             type="button"
-            onClick={runCheck}
+            onClick={runScan}
             disabled={loading}
             className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
           >
             <span className={`material-symbols-outlined text-[20px] ${loading ? "animate-spin" : ""}`}>
-              {loading ? "sync" : "copyright"}
+              {loading ? "sync" : "verified"}
             </span>
-            {loading ? "Checking sources..." : "Check for copies"}
+            {loading ? "Scanning names..." : "Scan trademarks"}
           </button>
-          <UpgradeNudge items={["Trade secret monitor", "Weekly digest", "Open source checks"]} />
+          <UpgradeNudge items={["Competitor alerts", "Renewal reminders", "Brand monitoring"]} />
         </section>
 
         <section className="rounded-lg border border-border-technical bg-surface-container-low p-4">
           {loading && <ResultSkeleton />}
           {!loading && !result && (
             <div className="rounded-lg bg-white p-8 text-center text-on-surface-variant">
-              Similar text and source links will appear here.
+              Trademark risk and matching names will appear here.
             </div>
           )}
           {result && (
             <div className="animate-[fade-in_200ms_ease-out] space-y-4">
               <div className="grid gap-4 md:grid-cols-[220px_1fr]">
-                <RiskGauge score={riskToScore(result.risk_label || result.overall_risk)} label={`${result.risk_label} risk`} />
+                <RiskGauge score={riskToScore(result.risk_level)} label={`${result.risk_level} risk`} />
                 <div className="rounded-lg border border-border-technical bg-white p-5">
-                  <h2 className="text-xl font-bold text-on-surface">Copy risk summary</h2>
-                  <p className="mt-3 text-on-surface-variant">
-                    We found {result.matches.length} possible public matches. Review each source before publishing or filing.
-                  </p>
+                  <h2 className="text-xl font-bold text-on-surface">Risk summary</h2>
+                  <p className="mt-3 text-on-surface-variant">{result.explanation}</p>
                 </div>
               </div>
               {result.matches.map((match) => (
-                <CopyrightCard key={match.url} match={match} />
+                <TrademarkCard key={`${match.name}-${match.match_type}`} match={match} />
               ))}
             </div>
           )}
