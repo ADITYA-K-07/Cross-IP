@@ -1,136 +1,138 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
-import { CopyrightCard } from "@/components/ip/Cards";
-import { ResultSkeleton } from "@/components/ip/LoadingStates";
-import { RiskGauge } from "@/components/ip/RiskGauge";
-import { UpgradeNudge } from "@/components/ip/UpgradeNudge";
-import { RateLimitError, checkCopyright } from "@/components/ip/api";
-import { demoInputs } from "@/components/ip/data";
-import { useFreeChecks } from "@/components/ip/useFreeChecks";
-import { useToast } from "@/components/ip/ToastProvider";
-import { CopyrightResult } from "@/components/ip/types";
-
-function riskToScore(level: string) {
-  const normalized = level.toLowerCase();
-  if (normalized.includes("critical")) return 90;
-  if (normalized.includes("high")) return 75;
-  if (normalized.includes("medium")) return 52;
-  return 20;
-}
+import { CodeEditorPanel } from "@/components/copyright/CodeEditorPanel";
+import { CopyrightMetricsCard } from "@/components/copyright/CopyrightMetricsCard";
+import { DetectedVectorCard } from "@/components/copyright/DetectedVectorCard";
+import { MOCK_COPYRIGHT_RESULT, SAMPLE_CODE_INPUT } from "@/components/copyright/mockData";
+import { CopyrightResult } from "@/components/copyright/types";
 
 export default function CopyrightPage() {
-  const [content, setContent] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return new URLSearchParams(window.location.search).get("q") ?? "";
-  });
+  const [codeText, setCodeText] = useState("");
+  const [isScanning, setIsScanning] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const [result, setResult] = useState<CopyrightResult | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const { remainingChecks, consumeCheck } = useFreeChecks();
-  const { showToast } = useToast();
 
-  const runCheck = async () => {
-    if (content.trim().length < 20) {
-      setMessage("Please paste at least 20 characters.");
-      showToast("warning", "Paste a little more text before checking.");
-      return;
-    }
-    if (remainingChecks <= 0) {
-      setMessage("Free tier limit reached. Open Pricing to see paid plans, or reset checks from the dashboard for demo use.");
-      showToast("warning", "Free tier limit reached.");
-      return;
-    }
+  const handleLoadFile = () => {
+    setCodeText(SAMPLE_CODE_INPUT);
+  };
 
-    setMessage("");
-    setLoading(true);
+  const handleScanNow = () => {
+    if (!codeText.trim() || isScanning) return;
+
+    setIsScanning(true);
     setResult(null);
-    try {
-      const nextResult = await checkCopyright(content.trim());
-      setResult(nextResult);
-      consumeCheck();
-      showToast("success", `Copy check complete. ${Math.max(0, remainingChecks - 1)} checks left.`);
-    } catch (error) {
-      if (error instanceof RateLimitError) {
-        setMessage("Free tier limit reached. Open Pricing to see paid plans.");
-        showToast("warning", "Free tier limit reached.");
-      } else {
-        setMessage("Something went wrong. Please try again.");
-        showToast("error", "Could not check for copies.");
-      }
-    } finally {
-      setLoading(false);
-    }
+
+    setTimeout(() => {
+      setIsScanning(false);
+      setHasSearched(true);
+      setResult(MOCK_COPYRIGHT_RESULT);
+    }, 1000);
   };
 
   return (
-    <div className="page-wrap">
-      <Link href="/dashboard" className="inline-flex items-center gap-1 text-sm font-semibold text-primary">
-        <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-        Back to dashboard
-      </Link>
+    <div className="flex flex-col w-full min-h-screen bg-background relative overflow-hidden pb-20">
+      {/* Ambient Grid Overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.03]"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 1px 1px, black 1px, transparent 0)",
+          backgroundSize: "16px 16px",
+        }}
+      />
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-        <section className="rounded-lg border border-border-technical bg-white p-6">
-          <p className="text-sm font-bold text-primary">Copyright Monitor</p>
-          <h1 className="mt-2 text-3xl font-bold text-on-surface">Check text or code for copies</h1>
-          <p className="mt-3 text-on-surface-variant">
-            Paste public-facing text, documentation, or code snippets and look for similar sources.
-          </p>
-          <textarea
-            value={content}
-            onChange={(event) => setContent(event.target.value)}
-            rows={12}
-            maxLength={5000}
-            className="mt-6 w-full resize-none rounded-lg border border-border-technical p-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-            placeholder="Paste text or code here..."
-          />
-          <div className="mt-2 flex items-center justify-between text-xs text-text-muted">
-            <button type="button" onClick={() => setContent(demoInputs.copyright)} className="font-semibold text-primary">
-              Use sample
-            </button>
-            <span>{content.length} / 5000</span>
+      <div className="relative z-10 max-w-[1600px] mx-auto w-full p-6 lg:p-8 flex flex-col gap-8">
+        {/* Page Header */}
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-outline-variant/30 pb-6">
+          <div>
+            <h1 className="font-display-lg text-on-surface mb-2 tracking-tight">
+              Copyright Monitor
+            </h1>
+            <p className="font-body-lg text-on-surface-variant max-w-2xl">
+              Initiate deep-scan analysis of source code or proprietary text against global intellectual property databases.
+            </p>
           </div>
-          {message && <p className="mt-3 text-sm font-semibold text-risk-high">{message}</p>}
-          <button
-            type="button"
-            onClick={runCheck}
-            disabled={loading}
-            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
-          >
-            <span className={`material-symbols-outlined text-[20px] ${loading ? "animate-spin" : ""}`}>
-              {loading ? "sync" : "copyright"}
-            </span>
-            {loading ? "Checking sources..." : "Check for copies"}
-          </button>
-          <UpgradeNudge items={["Trade secret monitor", "Weekly digest", "Open source checks"]} />
-        </section>
 
-        <section className="rounded-lg border border-border-technical bg-surface-container-low p-4">
-          {loading && <ResultSkeleton />}
-          {!loading && !result && (
-            <div className="rounded-lg bg-white p-8 text-center text-on-surface-variant">
-              Similar text and source links will appear here.
-            </div>
-          )}
-          {result && (
-            <div className="animate-[fade-in_200ms_ease-out] space-y-4">
-              <div className="grid gap-4 md:grid-cols-[220px_1fr]">
-                <RiskGauge score={riskToScore(result.risk_label || result.overall_risk)} label={`${result.risk_label} risk`} />
-                <div className="rounded-lg border border-border-technical bg-white p-5">
-                  <h2 className="text-xl font-bold text-on-surface">Copy risk summary</h2>
-                  <p className="mt-3 text-on-surface-variant">
-                    We found {result.matches.length} possible public matches. Review each source before publishing or filing.
-                  </p>
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col items-end">
+              <span className="font-label-caps text-on-surface-variant mb-1">
+                System Load
+              </span>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-24 bg-surface-container-highest rounded-sm overflow-hidden border border-outline-variant/30">
+                  <div
+                    className={`h-full bg-primary transition-all ${
+                      isScanning ? "w-[85%] animate-pulse" : "w-[35%]"
+                    }`}
+                  />
                 </div>
+                <span className="font-data-mono text-primary font-bold text-sm">
+                  {isScanning ? "85%" : "35%"}
+                </span>
               </div>
-              {result.matches.map((match) => (
-                <CopyrightCard key={match.url} match={match} />
-              ))}
             </div>
-          )}
-        </section>
+          </div>
+        </header>
+
+        {/* Main 12-Column Layout Grid */}
+        <div className="grid grid-cols-12 gap-6">
+          {/* Left Column: Code Editor */}
+          <CodeEditorPanel
+            value={codeText}
+            onChange={setCodeText}
+            onLoadFile={handleLoadFile}
+            onScanNow={handleScanNow}
+            isScanning={isScanning}
+          />
+
+          {/* Right Column: Metrics & Detected Vectors */}
+          <section className="col-span-12 lg:col-span-5 flex flex-col gap-6">
+            <CopyrightMetricsCard
+              riskIndex={result ? result.riskIndex : null}
+              fragmentsFound={result ? result.fragmentsFound : null}
+              repositoryCount={result ? result.repositoryCount : null}
+              isScanning={isScanning}
+            />
+
+            {/* Detected Vectors List */}
+            <div className="bg-surface border border-outline-variant/30 flex-1 flex flex-col rounded min-h-[350px]">
+              <div className="bg-surface-container-low border-b border-outline-variant/30 p-4 flex justify-between items-center rounded-t">
+                <span className="font-label-caps text-on-surface font-bold">
+                  Detected Vectors
+                </span>
+                <span className="font-data-mono text-[11px] text-on-surface border border-outline-variant/30 px-2 py-0.5 bg-surface rounded-sm">
+                  Sort: Severity
+                </span>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+                {isScanning && (
+                  <div className="p-8 text-center flex flex-col items-center justify-center gap-3 text-text-muted font-data-mono text-sm">
+                    <span className="material-symbols-outlined text-3xl text-primary animate-spin">
+                      sync
+                    </span>
+                    <span>Performing Heuristic Code Snippet Analysis...</span>
+                  </div>
+                )}
+
+                {!isScanning && result && result.vectors.length > 0 && (
+                  <>
+                    {result.vectors.map((vector) => (
+                      <DetectedVectorCard key={vector.id} vector={vector} />
+                    ))}
+                  </>
+                )}
+
+                {!isScanning && (!result || !hasSearched) && (
+                  <div className="p-8 text-center text-text-muted font-data-mono text-xs border border-dashed border-outline-variant/30 rounded bg-surface-container-lowest">
+                    Paste source code or click &quot;Load File&quot; and then &quot;Scan Now&quot; to inspect code provenance vectors.
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );
