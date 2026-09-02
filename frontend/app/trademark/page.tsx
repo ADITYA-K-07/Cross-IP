@@ -39,7 +39,7 @@ export default function TrademarkPage() {
       return;
     }
     if (remainingChecks <= 0) {
-      setMessage("Free tier limit reached. Open Pricing to see paid plans, or reset checks from the dashboard for demo use.");
+      setMessage("Free tier limit reached. Open Pricing to see paid plans.");
       showToast("warning", "Free tier limit reached.");
       return;
     }
@@ -50,8 +50,8 @@ export default function TrademarkPage() {
     try {
       const nextResult = await scanTrademark(brand.trim(), phonetic);
       setResult(nextResult);
-      consumeCheck();
-      showToast("success", `Trademark scan complete. ${Math.max(0, remainingChecks - 1)} checks left.`);
+      const usage = await consumeCheck();
+      showToast("success", `Trademark scan complete. ${usage.remaining} checks left.`);
     } catch (error) {
       if (error instanceof RateLimitError) {
         setMessage("Free tier limit reached. Open Pricing to see paid plans.");
@@ -87,6 +87,7 @@ export default function TrademarkPage() {
             id="brand"
             value={brand}
             onChange={(event) => setBrand(event.target.value)}
+            maxLength={200}
             className="mt-2 w-full rounded-lg border border-border-technical p-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             placeholder="Example: FlowNest"
           />

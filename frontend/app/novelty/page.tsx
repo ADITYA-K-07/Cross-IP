@@ -30,7 +30,7 @@ export default function NoveltyPage() {
       return;
     }
     if (remainingChecks <= 0) {
-      setMessage("Free tier limit reached. Open Pricing to see paid plans, or reset checks from the dashboard for demo use.");
+      setMessage("Free tier limit reached. Open Pricing to see paid plans.");
       showToast("warning", "Free tier limit reached.");
       return;
     }
@@ -41,8 +41,8 @@ export default function NoveltyPage() {
     try {
       const nextResult = await checkNovelty(description.trim());
       setResult(nextResult);
-      consumeCheck();
-      showToast("success", `Novelty check complete. ${Math.max(0, remainingChecks - 1)} checks left.`);
+      const usage = await consumeCheck();
+      showToast("success", `Novelty check complete. ${usage.remaining} checks left.`);
     } catch (error) {
       if (error instanceof RateLimitError) {
         setMessage("Free tier limit reached. Open Pricing to see paid plans.");
@@ -116,6 +116,9 @@ export default function NoveltyPage() {
                 <div className="rounded-lg border border-border-technical bg-white p-5">
                   <h2 className="text-xl font-bold text-on-surface">Plain-English result</h2>
                   <p className="mt-3 text-on-surface-variant">{result.analysis}</p>
+                  <p className="mt-3 text-xs text-text-muted">
+                    Coverage is limited to public US patent records surfaced through search results. This is an early screening aid, not legal clearance or legal advice.
+                  </p>
                 </div>
               </div>
               {result.patents.map((patent) => (

@@ -29,7 +29,7 @@ export default function DraftPage() {
       return;
     }
     if (remainingChecks <= 0) {
-      setMessage("Free tier limit reached. Open Pricing to see paid plans, or reset checks from the dashboard for demo use.");
+      setMessage("Free tier limit reached. Open Pricing to see paid plans.");
       showToast("warning", "Free tier limit reached.");
       return;
     }
@@ -40,8 +40,8 @@ export default function DraftPage() {
     try {
       const nextResult = await generateClaims(description.trim());
       setResult(nextResult);
-      consumeCheck();
-      showToast("success", `Claims generated. ${Math.max(0, remainingChecks - 1)} checks left.`);
+      const usage = await consumeCheck();
+      showToast("success", `Claims generated. ${usage.remaining} checks left.`);
     } catch (error) {
       if (error instanceof RateLimitError) {
         setMessage("Free tier limit reached. Open Pricing to see paid plans.");

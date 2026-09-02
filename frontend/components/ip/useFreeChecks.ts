@@ -1,66 +1,56 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { getUsage, UsageResult } from "./api";
 
 export const MAX_FREE_CHECKS = 5;
+const CHANGE_EVENT = "ipsentinel-usage-change";
 
-const STORAGE_KEY = "ipsentinel-free-checks";
-const CHANGE_EVENT = "ipsentinel-free-checks-change";
-
-function readStoredChecks() {
-  if (typeof window === "undefined") return MAX_FREE_CHECKS;
-
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  const parsed = raw ? Number(raw) : MAX_FREE_CHECKS;
-
-  if (!Number.isFinite(parsed)) return MAX_FREE_CHECKS;
-  return Math.max(0, Math.min(MAX_FREE_CHECKS, parsed));
-}
-
-function writeStoredChecks(value: number) {
-  if (typeof window === "undefined") return;
-
-  const nextValue = Math.max(0, Math.min(MAX_FREE_CHECKS, value));
-  window.localStorage.setItem(STORAGE_KEY, String(nextValue));
-  window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: nextValue }));
+function broadcastUsage(usage: UsageResult) {
+  window.dispatchEvent(new CustomEvent<UsageResult>(CHANGE_EVENT, { detail: usage }));
 }
 
 export function useFreeChecks() {
-  const [remainingChecks, setRemainingChecks] = useState(readStoredChecks);
+  const [usage, setUsage] = useState<UsageResult>({ limit: MAX_FREE_CHECKS, remaining: MAX_FREE_CHECKS });
+  const [usageError, setUsageError] = useState("");
+  const [isUsageLoading, setIsUsageLoading] = useState(true);
+
+  const refreshChecks = useCallback(async () => {
+    try {
+      const nextUsage = await getUsage();
+      setUsage(nextUsage);
+      setUsageError("");
+      broadcastUsage(nextUsage);
+      return nextUsage;
+    } catch (error) {
+      setUsageError(error instanceof Error ? error.message : "Could not load free-check usage.");
+      throw error;
+    } finally {
+      setIsUsageLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
+    const initialRefresh = window.setTimeout(() => {
+      void refreshChecks().catch(() => undefined);
+    }, 0);
     const handleChange = (event: Event) => {
-      const detail = (event as CustomEvent<number>).detail;
-      setRemainingChecks(typeof detail === "number" ? detail : readStoredChecks());
+      const nextUsage = (event as CustomEvent<UsageResult>).detail;
+      if (nextUsage) setUsage(nextUsage);
     };
-
-    const handleStorage = () => setRemainingChecks(readStoredChecks());
-
     window.addEventListener(CHANGE_EVENT, handleChange);
-    window.addEventListener("storage", handleStorage);
-
     return () => {
+      window.clearTimeout(initialRefresh);
       window.removeEventListener(CHANGE_EVENT, handleChange);
-      window.removeEventListener("storage", handleStorage);
     };
-  }, []);
-
-  const consumeCheck = useCallback(() => {
-    const current = readStoredChecks();
-    if (current <= 0) return false;
-
-    writeStoredChecks(current - 1);
-    return true;
-  }, []);
-
-  const resetChecks = useCallback(() => {
-    writeStoredChecks(MAX_FREE_CHECKS);
-  }, []);
+  }, [refreshChecks]);
 
   return {
-    maxChecks: MAX_FREE_CHECKS,
-    remainingChecks,
-    consumeCheck,
-    resetChecks,
+    maxChecks: usage.limit,
+    remainingChecks: usage.remaining,
+    usageError,
+    isUsageLoading,
+    refreshChecks,
+    consumeCheck: refreshChecks,
   };
 }

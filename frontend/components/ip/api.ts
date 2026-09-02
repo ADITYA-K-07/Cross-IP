@@ -1,93 +1,74 @@
-import {
-  demoCopyrightResult,
-  demoDraftResult,
-  demoNoveltyResult,
-  demoTrademarkResult,
-} from "./mockResults";
-import {
-  CopyrightResult,
-  DraftResult,
-  NoveltyResult,
-  TrademarkResult,
-} from "./types";
+import { CopyrightResult, DraftResult, NoveltyResult, TrademarkResult } from "./types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
 
-export class RateLimitError extends Error {
-  constructor(message = "Free tier limit reached") {
+export interface UsageResult {
+  limit: number;
+  remaining: number;
+}
+
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number) {
     super(message);
+    this.name = "ApiError";
+  }
+}
+
+export class RateLimitError extends ApiError {
+  constructor(message = "Free tier limit reached") {
+    super(message, 429);
     this.name = "RateLimitError";
   }
 }
 
-function delay() {
-  return new Promise((resolve) => window.setTimeout(resolve, 700));
+function endpoint(path: string) {
+  if (!API_URL) {
+    throw new ApiError("The IPSentinel backend is not configured. Set NEXT_PUBLIC_API_URL and try again.", 503);
+  }
+  return `${API_URL}${path}`;
 }
 
-async function postJson<T>(
-  path: string,
-  body: Record<string, string | boolean>,
-  fallback: T,
-): Promise<T> {
-  if (!API_URL) {
-    await delay();
-    return fallback;
-  }
-
+async function errorFrom(response: Response): Promise<ApiError> {
+  let message = "Request failed";
   try {
-    const response = await fetch(`${API_URL}${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        let message = "Free tier limit reached";
-        try {
-          const data = (await response.json()) as { error?: string; detail?: string };
-          message = data.error ?? data.detail ?? message;
-        } catch {
-          message = (await response.text()) || message;
-        }
-        throw new RateLimitError(message);
-      }
-
-      const text = await response.text();
-      throw new Error(text || "Request failed");
-    }
-
-    return (await response.json()) as T;
-  } catch (error) {
-    if (error instanceof RateLimitError) {
-      throw error;
-    }
-
-    await delay();
-    return fallback;
+    const data = (await response.json()) as { error?: string; detail?: string };
+    message = data.error ?? data.detail ?? message;
+  } catch {
+    message = (await response.text()) || message;
   }
+  return response.status === 429 ? new RateLimitError(message) : new ApiError(message, response.status);
+}
+
+async function requestJson<T>(path: string, init: RequestInit): Promise<T> {
+  const response = await fetch(endpoint(path), {
+    credentials: "include",
+    ...init,
+    headers: { "Content-Type": "application/json", ...init.headers },
+  });
+  if (!response.ok) throw await errorFrom(response);
+  return (await response.json()) as T;
+}
+
+function postJson<T>(path: string, body: Record<string, string | boolean>): Promise<T> {
+  return requestJson<T>(path, { method: "POST", body: JSON.stringify(body) });
+}
+
+export function getUsage(): Promise<UsageResult> {
+  return requestJson<UsageResult>("/api/usage", { method: "GET" });
 }
 
 export function checkNovelty(description: string): Promise<NoveltyResult> {
-  return postJson("/api/novelty", { description }, demoNoveltyResult);
+  return postJson("/api/novelty", { description });
 }
 
 export function generateClaims(description: string): Promise<DraftResult> {
-  return postJson("/api/draft", { description }, demoDraftResult);
+  return postJson("/api/draft", { description });
 }
 
-export function scanTrademark(
-  brand_name: string,
-  phonetic: boolean,
-): Promise<TrademarkResult> {
-  return postJson(
-    "/api/trademark",
-    { brand_name, phonetic },
-    demoTrademarkResult,
-  );
+export function scanTrademark(brand_name: string, phonetic: boolean): Promise<TrademarkResult> {
+  return postJson("/api/trademark", { brand_name, phonetic });
 }
 
 export function checkCopyright(content: string): Promise<CopyrightResult> {
-  return postJson("/api/copyright", { content }, demoCopyrightResult);
+  return postJson("/api/copyright", { content });
 }

@@ -75,7 +75,7 @@ export function PatentCard({ patent }: { patent: PatentMatch }) {
         <div>
           <p className="text-xs font-semibold text-text-muted">{patent.patent_number}</p>
           <h3 className="mt-1 text-base font-bold text-on-surface">{patent.title}</h3>
-          <p className="mt-1 text-sm text-text-muted">Filed: {patent.date}</p>
+          <p className="mt-1 text-sm text-text-muted">Date: {patent.date}</p>
         </div>
         <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-bold text-primary">
           {patent.similarity_pct}% similar
