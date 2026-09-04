@@ -47,8 +47,8 @@ def create_app(settings: Settings | None = None, services: object | None = None)
         CORSMiddleware,
         allow_origins=list(settings.allowed_origins),
         allow_credentials=True,
-        allow_methods=["GET", "POST"],
-        allow_headers=["Content-Type"],
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     @app.exception_handler(RequestValidationError)
