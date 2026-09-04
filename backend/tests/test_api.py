@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from io import BytesIO
 from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
+from PIL import Image
 
 from backend.config import Settings
 from backend.errors import UpstreamError
@@ -17,6 +19,7 @@ from backend.models.schemas import (
     SearchPhrasesResponse,
 )
 from backend.services.tavily import SearchResult
+from backend.services.cross_ip import demo_cross_ip_report
 
 
 class FakeGroq:
@@ -114,3 +117,79 @@ def test_copyright_contract() -> None:
     response = api.post("/api/copyright", json={"content": "A distinctive source phrase appears in this sufficiently long content for a copyright check."})
     assert response.status_code == 200
     assert response.json()["risk_label"] == "Medium"
+
+
+def test_cross_ip_stream_quota_and_pdf_export() -> None:
+    api, gemini = client()
+    response = api.post(
+        "/api/cross-ip-report/stream",
+        data={
+            "description": "A wearable ring measures hydration through skin impedance and sends an early dehydration alert.",
+            "brand_name": "FlowNest",
+            "content": "A distinctive source phrase appears in this sufficiently long content for a copyright check.",
+        },
+        files={"logo": ("logo.png", _valid_png(), "image/png")},
+    )
+    assert response.status_code == 200
+    assert "event: position" in response.text
+    assert "event: examiner_objection" in response.text
+    assert "event: revision" in response.text
+    assert "event: complete" in response.text
+    assert api.get("/api/usage").json()["remaining"] == 4
+    assert gemini.patent_payload is not None
+    assert "wearable ring" not in str(gemini.patent_payload).lower()
+
+    pdf = api.post("/api/cross-ip-report/pdf", json={"report": demo_cross_ip_report().model_dump()})
+    assert pdf.status_code == 200
+    assert pdf.headers["content-type"].startswith("application/pdf")
+    assert pdf.content.startswith(b"%PDF")
+
+
+def test_cross_ip_rejects_non_image_upload_without_charging_quota() -> None:
+    api, _ = client()
+    response = api.post(
+        "/api/cross-ip-report/stream",
+        data={
+            "description": "A wearable ring measures hydration through skin impedance and sends an early dehydration alert.",
+            "brand_name": "FlowNest",
+            "content": "A distinctive source phrase appears in this sufficiently long content for a copyright check.",
+        },
+        files={"logo": ("logo.png", b"not an image", "image/png")},
+    )
+    assert response.status_code == 400
+    assert "not a valid image" in response.json()["error"]
+    assert api.get("/api/usage").json()["remaining"] == 5
+
+
+def test_cross_ip_exact_demo_uses_cached_transcript_after_live_failure() -> None:
+    class FailingGroq(FakeGroq):
+        async def extract_concepts(self, description: str) -> ConceptsResponse:
+            raise UpstreamError("demo upstream failure")
+
+    api, _ = client()
+    api.app.state.services.groq = FailingGroq()
+    response = api.post(
+        "/api/cross-ip-report/stream",
+        data={
+            "description": "A low-cost wearable ring that measures hydration from skin signals and sends alerts to a mobile app before dehydration symptoms begin.",
+            "brand_name": "FlowNest",
+            "content": "Our platform creates a weekly report of new patent filings, competitor moves, renewal deadlines, and public prior art that may help product teams plan safer launches.",
+        },
+        files={"logo": ("logo.png", _valid_png(), "image/png")},
+    )
+    assert response.status_code == 200
+    assert "event: examiner_objection" in response.text
+    assert '"is_demo_fallback":true' in response.text
+    assert api.get("/api/usage").json()["remaining"] == 4
+
+
+def test_cross_ip_demo_profiles_show_distinct_risk_ranges() -> None:
+    assert demo_cross_ip_report("low").unified_score < 45
+    assert demo_cross_ip_report("high").unified_score > 50
+
+
+def _valid_png() -> bytes:
+    # A one-pixel transparent PNG. The route verifies actual image data, not only the MIME type.
+    output = BytesIO()
+    Image.new("RGBA", (1, 1), (124, 58, 237, 255)).save(output, format="PNG")
+    return output.getvalue()

@@ -18,7 +18,7 @@ export default function DashboardPage() {
         <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm font-bold text-primary">Free plan</p>
-            <h1 className="mt-2 text-3xl font-bold text-on-surface">Welcome to IPSentinel</h1>
+            <h1 className="mt-2 text-3xl font-bold text-on-surface">Welcome to CrossIP</h1>
             <p className="mt-2 max-w-2xl text-on-surface-variant">
               Pick a tool and run a quick IP check. Your free checks are tracked securely for this session.
             </p>

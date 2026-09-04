@@ -49,7 +49,7 @@ export function DocumentationModal({
         <div className="p-6 space-y-6 flex-1">
           <div className="p-4 bg-surface-container-low border border-border-technical rounded">
             <p className="font-body-md text-sm text-on-surface">
-              IPSentinel Agent Modules operate as specialized autonomous intelligence units across the intellectual property lifecycle. Each module utilizes domain-trained ML pipelines for high-precision IP surveillance.
+              CrossIP Agent Modules operate as specialized autonomous intelligence units across the intellectual property lifecycle. Each module utilizes domain-trained ML pipelines for high-precision IP surveillance.
             </p>
           </div>
 

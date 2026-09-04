@@ -1,4 +1,4 @@
-# IPSentinel — Master Build Plan
+# CrossIP — Master Build Plan
 
 > Single source of truth for Team Amigos.
 > Every decision, every task, every endpoint is in this file.
@@ -7,7 +7,7 @@
 
 ## Project summary
 
-**What:** IPSentinel is an AI-powered intellectual property protection platform. It lets founders, inventors, and students check patent novelty, draft patent claims, scan trademarks, and monitor copyright — without needing a lawyer.
+**What:** CrossIP is an AI-powered intellectual property protection platform. It lets founders, inventors, and students check patent novelty, draft patent claims, scan trademarks, and monitor copyright — without needing a lawyer.
 
 **Who:** Team Amigos · Vishwakarma Institute of Technology · Ideathon 2026
 
@@ -500,7 +500,7 @@ Response: { status: "ok" }
 ## Repo structure
 
 ```
-ipsentinel/
+CrossIP/
 ├── frontend/
 │   ├── src/
 │   │   ├── pages/

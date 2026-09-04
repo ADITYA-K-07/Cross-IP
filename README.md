@@ -1,2 +1,2 @@
-# IPSentinel
+# CrossIP
 We protect your Ideas.

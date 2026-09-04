@@ -16,7 +16,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "IPSentinel — AI Intellectual Property Protection Platform",
+  title: "CrossIP - AI IP Protection",
   description:
     "AI-powered intellectual property surveillance, patent novelty analysis, auto-drafting, and copyright monitoring.",
 };

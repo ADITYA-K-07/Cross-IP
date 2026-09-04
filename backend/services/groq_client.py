@@ -10,7 +10,15 @@ from pydantic import BaseModel, ValidationError
 
 from backend.config import Settings
 from backend.errors import ConfigurationError, MalformedModelResponse, UpstreamError
-from backend.models.schemas import ConceptsResponse, DraftResult, RiskAssessment, SearchPhrasesResponse
+from backend.models.schemas import (
+    AgentNarrative,
+    ConceptsResponse,
+    DraftResult,
+    ExaminerReview,
+    RebuttalNarrative,
+    RiskAssessment,
+    SearchPhrasesResponse,
+)
 
 
 ResultModel = TypeVar("ResultModel", bound=BaseModel)
@@ -76,4 +84,43 @@ class GroqClient:
             "Extract 3 or 4 distinctive searchable phrases from the supplied text or code. Return JSON only: {phrases: string[]}. Avoid secrets and keep each phrase under 100 characters.",
             content,
             SearchPhrasesResponse,
+        )
+
+    async def cross_ip_position(
+        self, role: str, baseline_score: int, evidence: list[dict[str, object]]
+    ) -> AgentNarrative:
+        return await self._json_completion(
+            f"You are the CrossIP {role} specialist. Reason only from the supplied retrieved public evidence. "
+            f"The deterministic risk baseline is {baseline_score}/100; do not change it. Return JSON only with "
+            "reasoning, confidence (0-1), and 1-3 evidence_ids copied exactly from the records. "
+            "Never introduce a source or fact outside the records.",
+            json.dumps({"baseline_score": baseline_score, "evidence": evidence}),
+            AgentNarrative,
+        )
+
+    async def cross_ip_examiner(
+        self, positions: list[dict[str, object]], evidence: list[dict[str, object]]
+    ) -> ExaminerReview:
+        return await self._json_completion(
+            "You are the adversarial CrossIP Examiner Agent. Challenge only an understated or overstated "
+            "specialist score when the supplied public evidence supports it. Return JSON only as {challenges:[{domain, "
+            "message, evidence_ids, direction}]}. Use at most one challenge per domain, and copy evidence_ids exactly. "
+            "Never retrieve or invent evidence.",
+            json.dumps({"positions": positions, "evidence": evidence}),
+            ExaminerReview,
+        )
+
+    async def cross_ip_rebuttal(
+        self,
+        role: str,
+        current_score: int,
+        objection: dict[str, object],
+        evidence: list[dict[str, object]],
+    ) -> RebuttalNarrative:
+        return await self._json_completion(
+            f"You are the CrossIP {role} specialist responding once to an Examiner objection. Reason only from "
+            "the supplied public evidence. Return JSON only with reasoning, confidence, evidence_ids, and revised_score "
+            "(0-100). Cite at least one exact evidence_id; do not invent sources.",
+            json.dumps({"current_score": current_score, "objection": objection, "evidence": evidence}),
+            RebuttalNarrative,
         )

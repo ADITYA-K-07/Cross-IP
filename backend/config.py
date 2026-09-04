@@ -29,8 +29,11 @@ class Settings:
     upstream_timeout_seconds: float
     session_cookie_secure: bool
     session_cookie_samesite: str
-    session_cookie_name: str = "ipsentinel_session"
+    session_cookie_name: str = "CrossIP_session"
     model_timeout_seconds: float = 45.0
+    cross_ip_patent_weight: float = 0.45
+    cross_ip_trademark_weight: float = 0.30
+    cross_ip_copyright_weight: float = 0.25
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -42,6 +45,13 @@ class Settings:
         samesite = getenv("SESSION_COOKIE_SAMESITE", "lax").strip().lower()
         if samesite not in {"lax", "strict", "none"}:
             samesite = "lax"
+        cross_ip_weights = (
+            float(getenv("CROSS_IP_PATENT_WEIGHT", "0.45")),
+            float(getenv("CROSS_IP_TRADEMARK_WEIGHT", "0.30")),
+            float(getenv("CROSS_IP_COPYRIGHT_WEIGHT", "0.25")),
+        )
+        if any(weight < 0 for weight in cross_ip_weights) or not 0.999 <= sum(cross_ip_weights) <= 1.001:
+            cross_ip_weights = (0.45, 0.30, 0.25)
         return cls(
             groq_api_key=getenv("GROQ_API_KEY") or None,
             gemini_api_key=getenv("GEMINI_API_KEY") or None,
@@ -53,4 +63,7 @@ class Settings:
             session_cookie_secure=_as_bool(getenv("SESSION_COOKIE_SECURE")),
             session_cookie_samesite=samesite,
             model_timeout_seconds=float(getenv("MODEL_TIMEOUT_SECONDS", "45")),
+            cross_ip_patent_weight=cross_ip_weights[0],
+            cross_ip_trademark_weight=cross_ip_weights[1],
+            cross_ip_copyright_weight=cross_ip_weights[2],
         )

@@ -49,7 +49,7 @@ export function EnterpriseDeploymentModal({
                 ENTERPRISE DEPLOYMENT PROTOCOL
               </p>
               <h2 className="font-headline-md text-on-surface text-lg">
-                IPSentinel Enterprise Architecture
+                CrossIP Enterprise Architecture
               </h2>
             </div>
           </div>

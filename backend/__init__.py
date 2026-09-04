@@ -1,2 +1,2 @@
-"""IPSentinel FastAPI backend."""
+"""CrossIP FastAPI backend."""
 

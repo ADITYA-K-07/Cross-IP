@@ -13,6 +13,7 @@ const navItems: NavItem[] = [
   { name: "Overview", href: "/dashboard", icon: "monitoring" },
   { name: "Agent Catalog", href: "/catalog", icon: "apps" },
   { name: "Novelty Scanner", href: "/novelty", icon: "radar" },
+  { name: "Cross-IP Report", href: "/cross-ip-report", icon: "hub" },
   { name: "Auto-Drafter", href: "/draft", icon: "edit_document" },
   { name: "Copyright Monitor", href: "/copyright", icon: "copyright" },
   { name: "Operational Tiers", href: "/pricing", icon: "payments" },
@@ -31,7 +32,7 @@ export function AppSidebar() {
           <span className="material-symbols-outlined text-[20px]">radar</span>
         </div>
         <span className="font-headline-md text-on-surface tracking-tight">
-          IPSentinel
+          CrossIP
         </span>
       </div>
 

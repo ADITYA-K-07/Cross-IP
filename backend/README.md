@@ -1,4 +1,4 @@
-# IPSentinel backend
+# CrossIP backend
 
 Run locally from the repository root:
 

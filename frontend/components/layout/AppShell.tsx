@@ -1,5 +1,8 @@
+"use client";
+
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
+import { ToastProvider } from "@/components/ip/ToastProvider";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -7,12 +10,14 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-background font-body-md text-on-background relative">
-      <AppSidebar />
-      <AppHeader />
-      <main className="pl-72 pt-16 min-h-screen bg-background">
-        {children}
-      </main>
-    </div>
+    <ToastProvider>
+      <div className="relative min-h-screen bg-background font-body-md text-on-background">
+        <AppSidebar />
+        <AppHeader />
+        <main className="min-h-screen bg-background pl-72 pt-16">
+          {children}
+        </main>
+      </div>
+    </ToastProvider>
   );
 }
