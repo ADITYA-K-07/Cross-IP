@@ -1,4 +1,4 @@
-import { CopyrightResult, DraftResult, NoveltyResult, TrademarkResult } from "./types";
+import { CopyrightResult, CrossIpEventName, CrossIpReport, DraftResult, NoveltyResult, TrademarkResult } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
 
@@ -23,7 +23,7 @@ export class RateLimitError extends ApiError {
 
 function endpoint(path: string) {
   if (!API_URL) {
-    throw new ApiError("The IPSentinel backend is not configured. Set NEXT_PUBLIC_API_URL and try again.", 503);
+    throw new ApiError("The CrossIP backend is not configured. Set NEXT_PUBLIC_API_URL and try again.", 503);
   }
   return `${API_URL}${path}`;
 }
@@ -71,4 +71,61 @@ export function scanTrademark(brand_name: string, phonetic: boolean): Promise<Tr
 
 export function checkCopyright(content: string): Promise<CopyrightResult> {
   return postJson("/api/copyright", { content });
+}
+
+export interface CrossIpSubmission {
+  description: string;
+  brandName: string;
+  content: string;
+  logo: File;
+}
+
+export async function streamCrossIpReport(
+  submission: CrossIpSubmission,
+  onEvent: (event: CrossIpEventName, payload: unknown) => void,
+): Promise<void> {
+  const form = new FormData();
+  form.set("description", submission.description);
+  form.set("brand_name", submission.brandName);
+  form.set("content", submission.content);
+  form.set("logo", submission.logo);
+  const response = await fetch(endpoint("/api/cross-ip-report/stream"), {
+    method: "POST",
+    credentials: "include",
+    body: form,
+  });
+  if (!response.ok || !response.body) throw await errorFrom(response);
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+    const blocks = buffer.split("\n\n");
+    buffer = blocks.pop() ?? "";
+    for (const block of blocks) {
+      const event = block.match(/^event: (.+)$/m)?.[1] as CrossIpEventName | undefined;
+      const serialized = block.match(/^data: (.+)$/m)?.[1];
+      if (event && serialized) onEvent(event, JSON.parse(serialized));
+    }
+    if (done) break;
+  }
+}
+
+export async function downloadCrossIpPdf(report: CrossIpReport): Promise<void> {
+  const response = await fetch(endpoint("/api/cross-ip-report/pdf"), {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ report }),
+  });
+  if (!response.ok) throw await errorFrom(response);
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "CrossIP-cross-ip-report.pdf";
+  link.click();
+  URL.revokeObjectURL(url);
 }

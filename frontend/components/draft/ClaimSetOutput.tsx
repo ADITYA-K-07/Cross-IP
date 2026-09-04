@@ -36,7 +36,7 @@ export function ClaimSetOutput({
       })
       .join("\n\n");
 
-    const headerNotice = `====================================================\nIPSENTINEL PATENT DRAFTER — SPECIFICATION CLAIMS\nConfidence Score: ${result.confidenceScore}%\nGenerated At: ${new Date().toISOString()}\n====================================================\n\n`;
+    const headerNotice = `====================================================\nCrossIP PATENT DRAFTER — SPECIFICATION CLAIMS\nConfidence Score: ${result.confidenceScore}%\nGenerated At: ${new Date().toISOString()}\n====================================================\n\n`;
 
     const blob = new Blob([headerNotice + formattedText], {
       type: "text/plain;charset=utf-8",

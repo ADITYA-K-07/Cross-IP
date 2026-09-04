@@ -3,7 +3,7 @@ import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
 
 export const metadata: Metadata = {
-  title: "IPSentinel - AI IP Protection",
+  title: "CrossIP - AI IP Protection",
   description:
     "Check patent novelty, draft claims, scan trademarks, and monitor copyright with simple AI tools.",
 };

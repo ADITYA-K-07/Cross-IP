@@ -36,7 +36,7 @@ export function EnterpriseHero({
           </h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl leading-relaxed border-l-2 border-border-technical pl-6">
             Deploy brutal efficiency across your intellectual property portfolio.
-            IPSentinel Enterprise scales advanced monitoring, predictive mapping,
+            CrossIP Enterprise scales advanced monitoring, predictive mapping,
             and structural integrity analysis without the overhead of traditional
             legal teams.
           </p>

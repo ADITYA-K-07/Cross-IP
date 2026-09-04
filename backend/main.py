@@ -1,4 +1,4 @@
-"""FastAPI application entry point for the IPSentinel local MVP."""
+"""FastAPI application entry point for the CrossIP local MVP."""
 
 from __future__ import annotations
 
@@ -14,13 +14,14 @@ from backend.config import Settings
 from backend.errors import PublicServiceError
 from backend.middleware.rate_limit import SessionUsageStore, get_or_create_session_id
 from backend.models.schemas import UsageResponse
-from backend.routers import copyright, draft, novelty, trademark
+from backend.routers import copyright, cross_ip, draft, novelty, trademark
 from backend.services.gemini import GeminiClient
 from backend.services.groq_client import GroqClient
+from backend.services.logo_similarity import LocalClipLogoMatcher
 from backend.services.tavily import TavilyClient
 
 
-logger = logging.getLogger("ipsentinel")
+logger = logging.getLogger("CrossIP")
 
 
 def _validation_message(error: RequestValidationError) -> str:
@@ -33,11 +34,14 @@ def _validation_message(error: RequestValidationError) -> str:
 
 def create_app(settings: Settings | None = None, services: object | None = None) -> FastAPI:
     settings = settings or Settings.from_env()
-    app = FastAPI(title="IPSentinel API", version="0.1.0")
+    app = FastAPI(title="CrossIP API", version="0.1.0")
     app.state.settings = settings
     app.state.usage_store = SessionUsageStore(limit=5)
     app.state.services = services or SimpleNamespace(
-        tavily=TavilyClient(settings), groq=GroqClient(settings), gemini=GeminiClient(settings)
+        tavily=TavilyClient(settings),
+        groq=GroqClient(settings),
+        gemini=GeminiClient(settings),
+        logo_similarity=LocalClipLogoMatcher(),
     )
     app.add_middleware(
         CORSMiddleware,
@@ -90,6 +94,7 @@ def create_app(settings: Settings | None = None, services: object | None = None)
     app.include_router(draft.router)
     app.include_router(trademark.router)
     app.include_router(copyright.router)
+    app.include_router(cross_ip.router)
     return app
 
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -134,3 +134,78 @@ class PublicRiskAssessment(BaseModel):
     risk_level: Literal["Low", "Medium", "High", "Critical"]
     explanation: str = Field(min_length=10, max_length=500)
 
+
+CrossIpDomain = Literal["patent", "trademark", "copyright"]
+CrossIpRiskLabel = Literal["Low", "Moderate", "High", "Critical"]
+
+
+class CrossIpEvidence(BaseModel):
+    source_id: str = Field(min_length=3, max_length=160)
+    title: str = Field(min_length=1, max_length=240)
+    excerpt: str = Field(min_length=1, max_length=900)
+    relevance: float = Field(ge=0, le=1)
+    url: str | None = None
+
+
+class AgentNarrative(BaseModel):
+    reasoning: str = Field(min_length=10, max_length=700)
+    confidence: float = Field(ge=0, le=1)
+    evidence_ids: list[str] = Field(min_length=1, max_length=3)
+
+
+class ExaminerChallenge(BaseModel):
+    domain: CrossIpDomain
+    message: str = Field(min_length=10, max_length=700)
+    evidence_ids: list[str] = Field(min_length=1, max_length=3)
+    direction: Literal["increase", "decrease"]
+
+
+class ExaminerReview(BaseModel):
+    challenges: list[ExaminerChallenge] = Field(default_factory=list, max_length=3)
+
+
+class RebuttalNarrative(AgentNarrative):
+    revised_score: int = Field(ge=0, le=100)
+
+
+class CrossIpDomainResult(BaseModel):
+    domain: CrossIpDomain
+    agent_name: str
+    initial_score: int = Field(ge=0, le=100)
+    score: int = Field(ge=0, le=100)
+    confidence: float = Field(ge=0, le=1)
+    reasoning: str = Field(min_length=10, max_length=700)
+    evidence_ids: list[str] = Field(min_length=1, max_length=3)
+    revision_reason: str | None = Field(default=None, max_length=700)
+    visual_evidence_available: bool | None = None
+
+
+class DebateEntry(BaseModel):
+    round: int = Field(ge=1, le=3)
+    kind: Literal["position", "objection", "rebuttal"]
+    agent: str
+    domain: CrossIpDomain | None = None
+    message: str = Field(min_length=10, max_length=900)
+    evidence_ids: list[str] = Field(default_factory=list, max_length=3)
+
+
+class InnovationGapFeature(BaseModel):
+    feature: str = Field(min_length=1, max_length=160)
+    status: Literal["overlap", "gap"]
+    evidence_ids: list[str] = Field(default_factory=list, max_length=3)
+
+
+class CrossIpReport(BaseModel):
+    unified_score: int = Field(ge=0, le=100)
+    risk_label: CrossIpRiskLabel
+    executive_summary: str = Field(min_length=20, max_length=1000)
+    domains: list[CrossIpDomainResult] = Field(min_length=3, max_length=3)
+    transcript: list[DebateEntry] = Field(min_length=3, max_length=10)
+    evidence: list[CrossIpEvidence] = Field(min_length=1, max_length=20)
+    opinions_and_tips: list[str] = Field(min_length=2, max_length=4)
+    innovation_gap_map: list[InnovationGapFeature] = Field(min_length=1, max_length=5)
+    is_demo_fallback: bool = False
+
+
+class CrossIpPdfRequest(BaseModel):
+    report: CrossIpReport

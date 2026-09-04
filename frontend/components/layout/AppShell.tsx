@@ -11,6 +11,7 @@ interface AppShellProps {
 
 const navLinks = [
   { label: "Features", href: "/#features" },
+  { label: "Cross-IP Report", href: "/cross-ip-report" },
   { label: "Pricing", href: "/pricing" },
   { label: "Dashboard", href: "/dashboard" },
 ];
@@ -28,7 +29,7 @@ export function AppShell({ children }: AppShellProps) {
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white">
                 <span className="material-symbols-outlined text-[20px]">shield</span>
               </span>
-              <span className="text-lg font-bold">IPSentinel</span>
+              <span className="text-lg font-bold">CrossIP</span>
             </Link>
 
             <nav className="hidden items-center gap-2 md:flex">

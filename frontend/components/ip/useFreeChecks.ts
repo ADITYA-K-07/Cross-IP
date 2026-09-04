@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getUsage, UsageResult } from "./api";
 
 export const MAX_FREE_CHECKS = 5;
-const CHANGE_EVENT = "ipsentinel-usage-change";
+const CHANGE_EVENT = "CrossIP-usage-change";
 
 function broadcastUsage(usage: UsageResult) {
   window.dispatchEvent(new CustomEvent<UsageResult>(CHANGE_EVENT, { detail: usage }));

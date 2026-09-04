@@ -26,7 +26,7 @@ const features = [
   {
     name: "Full API access and white-label",
     description:
-      "Connect IPSentinel analysis to your own platform, law firm portal, or internal workflow. Built for multi-client and portfolio-scale use.",
+      "Connect CrossIP analysis to your own platform, law firm portal, or internal workflow. Built for multi-client and portfolio-scale use.",
     icon: "api",
   },
 ];

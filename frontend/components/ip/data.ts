@@ -1,5 +1,13 @@
 export const freeTools = [
   {
+    title: "Cross-IP Report",
+    shortTitle: "Cross-IP Report",
+    description: "Let specialist agents debate patent, trademark, and copyright risks.",
+    href: "/cross-ip-report",
+    icon: "hub",
+    action: "Run report",
+  },
+  {
     title: "Patent Novelty Checker",
     shortTitle: "Patent Novelty",
     description: "Check if your invention looks similar to existing patents.",
@@ -167,7 +175,7 @@ export const faqs = [
   },
   {
     q: "Can I use this before filing a patent?",
-    a: "Yes. IPSentinel is built for early checks before you spend on filing.",
+    a: "Yes. CrossIP is built for early checks before you spend on filing.",
   },
   {
     q: "Is my invention data private?",
@@ -183,4 +191,18 @@ export const demoInputs = {
   trademark: "FlowNest",
   copyright:
     "Our platform creates a weekly report of new patent filings, competitor moves, renewal deadlines, and public prior art that may help product teams plan safer launches.",
+  crossIpLowRisk: {
+    description:
+      "A lightweight paper garden planner that helps community volunteers assign watering days using manually entered weather notes and shared bed labels.",
+    trademark: "TrellisNote",
+    copyright:
+      "TrellisNote helps community gardeners write weekly watering notes, label shared planting beds, and coordinate volunteer visits with a simple printable checklist.",
+  },
+  crossIpHighRisk: {
+    description:
+      "A low-cost wearable ring that measures hydration from skin signals and sends alerts to a mobile app before dehydration symptoms begin.",
+    trademark: "FlowNest",
+    copyright:
+      "Our platform creates a weekly report of new patent filings, competitor moves, renewal deadlines, and public prior art that may help product teams plan safer launches.",
+  },
 };
